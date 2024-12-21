@@ -1,0 +1,16 @@
+syntax = "proto3";
+package img_downloader.v1;
+option go_package = 'img_downloader/gen/img_downloader/v1;img_downloaderv1';
+
+service ImageService {
+  rpc DownloadImages(DownloadImagesRequest) returns (DownloadImagesResponse);
+}
+
+message DownloadImagesRequest {
+  repeated string urls = 1;
+}
+
+message DownloadImagesResponse {
+  int32 existing_urls = 1;
+  int32 new_urls = 2;
+}

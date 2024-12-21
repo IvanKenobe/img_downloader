@@ -1,0 +1,5 @@
+env: "local"
+grpc:
+  host: "localhost"
+  port: 8080
+  timeout: 5s # скорость обработки запроса
