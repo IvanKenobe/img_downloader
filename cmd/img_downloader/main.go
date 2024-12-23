@@ -6,7 +6,9 @@ import (
 	"golang.org/x/net/http2/h2c"
 	"img_downloader/gen/img_downloader/v1/img_downloaderv1connect"
 	"img_downloader/internal/config"
+	imageRepo "img_downloader/internal/repository/image"
 	imageServer "img_downloader/internal/server/image"
+	imageService "img_downloader/internal/services/image"
 	"img_downloader/internal/storage"
 	"log/slog"
 	"net/http"
@@ -24,9 +26,11 @@ func main() {
 		slog.String("Env", cfg.Env),
 		slog.String("Port", strconv.Itoa(cfg.GRPC.Port)))
 
-	_ = storage.ConnectPostgresDB()
+	db := storage.ConnectPostgresDB(log)
 
-	imgDownloader := imageServer.NewImageServer(log)
+	imgRepo := imageRepo.New(db)
+	imgService := imageService.New(log, imgRepo)
+	imgDownloader := imageServer.New(log, imgService)
 
 	mux := http.NewServeMux()
 	path, handler := img_downloaderv1connect.NewImageServiceHandler(imgDownloader)
@@ -39,6 +43,4 @@ func main() {
 	if err != nil {
 		fmt.Errorf("server error: %v", err)
 	}
-
-	log.Info(fmt.Sprintf("Server is running on %s:%d", cfg.GRPC.Host, cfg.GRPC.Port))
 }

@@ -1,12 +1,12 @@
 package storage
 
 import (
-	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log/slog"
 )
 
-func ConnectPostgresDB() *gorm.DB {
+func ConnectPostgresDB(log *slog.Logger) *gorm.DB {
 
 	dsn := "host=localhost port=5432 user=postgres password=postgres dbname=img_downloader_db sslmode=disable timezone=Europe/Kyiv"
 
@@ -16,7 +16,7 @@ func ConnectPostgresDB() *gorm.DB {
 		panic("failed to connect database")
 	}
 
-	fmt.Println("Connected to database")
+	log.Info("Database connected")
 
 	return db
 }
