@@ -1,10 +1,11 @@
-package nats
+package producer
 
 import (
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"img_downloader/internal/config"
 	"log/slog"
+	"strconv"
 )
 
 type Producer struct {
@@ -13,13 +14,17 @@ type Producer struct {
 	topic string
 }
 
-func New(natsCfg *config.NatsConfig, topic string, log *slog.Logger) (*Producer, error) {
+func New(natsCfg *config.NatsConfig, topic string, log *slog.Logger) *Producer {
 	natsURL := fmt.Sprintf("nats://%s:%s@%s:%d", natsCfg.User, natsCfg.Password, natsCfg.Host, natsCfg.Port)
 	conn, err := nats.Connect(natsURL)
+
 	if err != nil {
-		return nil, fmt.Errorf("nats error: %w", err)
+		log.Error("Failed to create nats producer", err)
+		panic(err)
 	}
-	return &Producer{conn: conn, topic: topic, log: log}, nil
+
+	log.Info("Created NATS producer on", slog.String("Port", strconv.Itoa(natsCfg.Port)))
+	return &Producer{conn: conn, topic: topic, log: log}
 }
 
 func (p *Producer) Publish(data []byte) error {

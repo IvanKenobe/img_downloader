@@ -6,7 +6,8 @@ import (
 	"golang.org/x/net/http2/h2c"
 	"img_downloader/gen/img_downloader/v1/img_downloaderv1connect"
 	"img_downloader/internal/config"
-	"img_downloader/internal/nats"
+	natsConsumer "img_downloader/internal/nats/consumer"
+	natsProducer "img_downloader/internal/nats/producer"
 	imageRepo "img_downloader/internal/repository/image"
 	imageServer "img_downloader/internal/server/image"
 	imageService "img_downloader/internal/services/image"
@@ -17,6 +18,7 @@ import (
 )
 
 func main() {
+
 	log := slog.Default()
 
 	log.Info("Start")
@@ -29,21 +31,20 @@ func main() {
 
 	db := storage.ConnectPostgresDB(log)
 
-	natsProducer, err := nats.New(&cfg.Nats, "image_urls", log)
-	if err != nil {
-		log.Error("Failed to create nats producer", err)
-	}
+	producer := natsProducer.New(&cfg.Nats, "image_urls", log)
 
-	log.Info("Created nats producer on", slog.String("port", strconv.Itoa(cfg.Nats.Port)))
+	consumer := natsConsumer.New(&cfg.Nats, "image_urls", log)
+
+	consumer.Start()
 
 	imgRepo := imageRepo.New(db)
 	imgService := imageService.New(log, imgRepo)
-	imgServer := imageServer.New(log, imgService, natsProducer)
+	imgServer := imageServer.New(log, imgService, producer)
 
 	mux := http.NewServeMux()
 	path, handler := img_downloaderv1connect.NewImageServiceHandler(imgServer)
 	mux.Handle(path, handler)
-	err = http.ListenAndServe(
+	err := http.ListenAndServe(
 		cfg.GRPC.Host+":"+strconv.Itoa(cfg.GRPC.Port),
 		h2c.NewHandler(mux, &http2.Server{}),
 	)
