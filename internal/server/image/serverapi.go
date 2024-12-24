@@ -5,20 +5,23 @@ import (
 	"context"
 	"errors"
 	imgdownloaderv1 "img_downloader/gen/img_downloader/v1"
+	"img_downloader/internal/nats"
 	"img_downloader/internal/services/image"
 	"log/slog"
 	"net/url"
 )
 
 type Server struct {
-	log     *slog.Logger
-	service *imageService.Service
+	log          *slog.Logger
+	service      *imageService.Service
+	natsProducer *nats.Producer
 }
 
-func New(log *slog.Logger, service *imageService.Service) *Server {
+func New(log *slog.Logger, service *imageService.Service, natsProducer *nats.Producer) *Server {
 	return &Server{
-		log:     log,
-		service: service,
+		log:          log,
+		service:      service,
+		natsProducer: natsProducer,
 	}
 }
 
@@ -42,7 +45,12 @@ func (s *Server) DownloadImages(
 	}
 
 	for _, u := range newUrls {
-		s.log.Info("download url", "url", u)
+		err = s.natsProducer.Publish([]byte(u))
+		s.log.Info("URL Published", "url", u)
+
+		if err != nil {
+			s.log.Info("nats publish failed", "url", u, "err", err)
+		}
 	}
 
 	return connect.NewResponse(&imgdownloaderv1.DownloadImagesResponse{

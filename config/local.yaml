@@ -3,3 +3,8 @@ grpc:
   host: "localhost"
   port: 8080
   timeout: 5s # скорость обработки запроса
+nats:
+  host: "0.0.0.0"
+  port: 57960
+  user: "local"
+  password: "8d15FncwAR1URByszjFR42Hsgbq7Czuw"

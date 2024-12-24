@@ -10,12 +10,20 @@ import (
 type Config struct {
 	Env  string     `yaml:"env" env-default:"local"`
 	GRPC GRPCConfig `yaml:"grpc" env-required:"true"`
+	Nats NatsConfig `yaml:"nats" env-required:"true"`
 }
 
 type GRPCConfig struct {
 	Host    string        `yaml:"host" env-required:"true"`
 	Port    int           `yaml:"port" env-required:"true"`
 	Timeout time.Duration `yaml:"timeout" env-default:"4s"`
+}
+
+type NatsConfig struct {
+	Host     string `yaml:"host" env-required:"true"`
+	Port     int    `yaml:"port" env-required:"true"`
+	User     string `yaml:"user" env-required:"true"`
+	Password string `yaml:"password" env-required:"true"`
 }
 
 func MustLoad() *Config {
