@@ -6,6 +6,7 @@ require (
 	connectrpc.com/connect v1.17.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/nats-io/nats.go v1.38.0
+	go.uber.org/mock v0.5.0
 	golang.org/x/net v0.23.0
 	google.golang.org/protobuf v1.34.2
 	gorm.io/driver/postgres v1.5.11
