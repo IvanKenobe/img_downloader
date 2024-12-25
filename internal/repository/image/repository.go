@@ -15,7 +15,7 @@ func New(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) CheckURLs(ctx context.Context, urls []string) ([]string, error) {
+func (r *Repository) FilterNewURLs(ctx context.Context, urls []string) ([]string, error) {
 	const op = "repository.image.CheckURLs"
 	var newURLs []string
 

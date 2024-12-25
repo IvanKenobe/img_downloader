@@ -3,12 +3,10 @@ package imageServer
 import (
 	"connectrpc.com/connect"
 	"context"
-	"errors"
 	imgdownloaderv1 "img_downloader/gen/img_downloader/v1"
 	natsProducer "img_downloader/internal/nats/producer"
 	"img_downloader/internal/services/image"
 	"log/slog"
-	"net/url"
 )
 
 type Server struct {
@@ -33,44 +31,28 @@ func (s *Server) DownloadImages(
 		return nil, err
 	}
 
-	if err := validateUrls(req); err != nil {
-		return nil, err
+	if err := s.service.ValidateURLs(ctx, req.Msg.Urls); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	checkedUrls, err := s.service.CheckUrls(ctx, req.Msg.Urls)
+	checkedUrls, err := s.service.FilterNewURLs(ctx, req.Msg.Urls)
 	if err != nil {
 		s.log.Info("Failed to check urls", "urls", req.Msg.Urls)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	for _, u := range checkedUrls {
-		err = s.natsProducer.Publish([]byte(u))
+	newURLsCount, publishErrors := s.service.PublishURLsToNATS(ctx, checkedUrls)
 
-		if err != nil {
-			s.log.Error("nats publish failed",
-				slog.String("url", u),
-				slog.String("err", err.Error()))
+	if len(publishErrors) > 0 {
+		for _, err := range publishErrors {
+			s.log.Error("Failed to publish URL to NATS", slog.String("error", err.Error()))
 		}
 	}
+
+	existingURLsCount := len(req.Msg.Urls) - len(checkedUrls)
 
 	return connect.NewResponse(&imgdownloaderv1.DownloadImagesResponse{
-		ExistingUrls: 0,
-		NewUrls:      0,
+		ExistingUrls: int32(existingURLsCount),
+		NewUrls:      newURLsCount,
 	}), nil
-}
-
-func validateUrls(req *connect.Request[imgdownloaderv1.DownloadImagesRequest]) error {
-	if len(req.Msg.GetUrls()) == 0 {
-		return connect.NewError(connect.CodeInvalidArgument, errors.New("urls are required"))
-	}
-
-	for _, u := range req.Msg.GetUrls() {
-		_, err := url.ParseRequestURI(u)
-
-		if err != nil {
-			return connect.NewError(connect.CodeInvalidArgument, err)
-		}
-	}
-
-	return nil
 }

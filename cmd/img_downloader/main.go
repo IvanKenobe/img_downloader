@@ -47,7 +47,7 @@ func main() {
 	consumer.Start()
 
 	imgRepo := imageRepo.New(db)
-	imgService := imageService.New(log, imgRepo)
+	imgService := imageService.New(log, imgRepo, producer)
 	imgServer := imageServer.New(log, imgService, producer)
 
 	mux := http.NewServeMux()
