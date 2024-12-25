@@ -37,14 +37,13 @@ func (s *Server) DownloadImages(
 		return nil, err
 	}
 
-	newUrls, err := s.service.CheckUrls(ctx, req.Msg.Urls)
-
+	checkedUrls, err := s.service.CheckUrls(ctx, req.Msg.Urls)
 	if err != nil {
-		s.log.Info("image download failed", "urls", req.Msg.Urls)
-		return nil, connect.NewError(connect.CodeInternal, errors.New("internal server error"))
+		s.log.Info("Failed to check urls", "urls", req.Msg.Urls)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	for _, u := range newUrls {
+	for _, u := range checkedUrls {
 		err = s.natsProducer.Publish([]byte(u))
 
 		if err != nil {

@@ -22,11 +22,11 @@ func (s *Service) CheckUrls(ctx context.Context, urls []string) ([]string, error
 	const op = "service.image.CheckUrls"
 	s.log.With(slog.String("op", op))
 
-	newUrls, err := s.repo.CheckURLs(ctx, urls)
+	checkedUrls, err := s.repo.CheckURLs(ctx, urls)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return newUrls, nil
+	return checkedUrls, nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go.uber.org/mock/gomock"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"img_downloader/gen/img_downloader/v1/img_downloaderv1connect"
@@ -12,6 +13,7 @@ import (
 	imageServer "img_downloader/internal/server/image"
 	imageService "img_downloader/internal/services/image"
 	"img_downloader/internal/storage"
+	"img_downloader/internal/uploader"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -31,9 +33,16 @@ func main() {
 
 	db := storage.ConnectPostgresDB(log)
 
-	producer := natsProducer.New(&cfg.Nats, "image_urls", log)
+	ctrl := gomock.NewController(nil)
+	defer ctrl.Finish()
 
-	consumer := natsConsumer.New(&cfg.Nats, "image_urls", log)
+	mockUploader := uploader.NewMockUploader(ctrl)
+
+	mockUploader.EXPECT().UploadToS3(gomock.Any()).Return("mock-s3-url", nil).AnyTimes()
+	mockUploader.EXPECT().UploadToSFTP(gomock.Any()).Return("mock-sftp-url", nil).AnyTimes()
+
+	producer := natsProducer.New(&cfg.Nats, "image_urls", log)
+	consumer := natsConsumer.New(&cfg.Nats, "image_urls", log, mockUploader)
 
 	consumer.Start()
 
