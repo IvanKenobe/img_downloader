@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"context"
 	"fmt"
 	"github.com/nats-io/nats.go"
 	"img_downloader/internal/config"
@@ -8,13 +9,17 @@ import (
 	"strconv"
 )
 
-type Consumer struct {
-	log   *slog.Logger
-	conn  *nats.Conn
-	topic string
+type Handler interface {
+	Process(ctx context.Context, msg *nats.Msg) error
 }
 
-func New(natsCfg *config.NatsConfig, topic string, log *slog.Logger) *Consumer {
+type Consumer struct {
+	log      *slog.Logger
+	conn     *nats.Conn
+	handlers map[string]Handler
+}
+
+func New(natsCfg *config.NatsConfig, log *slog.Logger) (*Consumer, error) {
 	natsURL := fmt.Sprintf("nats://%s:%s@%s:%d", natsCfg.User, natsCfg.Password, natsCfg.Host, natsCfg.Port)
 	conn, err := nats.Connect(natsURL)
 
@@ -26,24 +31,32 @@ func New(natsCfg *config.NatsConfig, topic string, log *slog.Logger) *Consumer {
 	log.Info("Created NATS consumer on", slog.String("Port", strconv.Itoa(natsCfg.Port)))
 
 	return &Consumer{
-		conn:  conn,
-		topic: topic,
-		log:   log,
-	}
+		conn:     conn,
+		log:      log,
+		handlers: make(map[string]Handler),
+	}, nil
 }
 
-func (c *Consumer) Start() {
-	log := c.log.With(
-		slog.String("topic", c.topic),
-	)
+func (c *Consumer) RegisterHandler(topic string, handler Handler) {
+	c.handlers[topic] = handler
+}
+func (c *Consumer) Start(ctx context.Context) {
+	const op = "consumer.Start"
+	log := c.log.With(slog.String("op", op))
 
-	_, err := c.conn.Subscribe(c.topic, func(msg *nats.Msg) {
-		url := string(msg.Data)
-		log.Info("Received a message", slog.String("url", url))
-	})
+	for topic, handler := range c.handlers {
+		log.Info("Subscribing to topic", slog.String("topic", topic))
 
-	if err != nil {
-		log.Error(fmt.Sprintf("Failed to subscribe: %v", err))
-		return
+		_, err := c.conn.Subscribe(topic, func(msg *nats.Msg) {
+			if err := handler.Process(ctx, msg); err != nil {
+				log.Error("Error processing message", slog.String("topic", topic), slog.String("err", err.Error()))
+			}
+		})
+
+		if err != nil {
+			log.Error("Failed to subscribe to topic", slog.String("topic", topic), slog.String("err", err.Error()))
+			continue
+		}
 	}
+	<-ctx.Done()
 }

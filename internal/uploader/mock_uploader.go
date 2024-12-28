@@ -15,32 +15,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockUploader is a mock of Uploader interface.
-type MockUploader struct {
+// MockS3Uploader is a mock of S3Uploader interface.
+type MockS3Uploader struct {
 	ctrl     *gomock.Controller
-	recorder *MockUploaderMockRecorder
+	recorder *MockS3UploaderMockRecorder
 	isgomock struct{}
 }
 
-// MockUploaderMockRecorder is the mock recorder for MockUploader.
-type MockUploaderMockRecorder struct {
-	mock *MockUploader
+// MockS3UploaderMockRecorder is the mock recorder for MockS3Uploader.
+type MockS3UploaderMockRecorder struct {
+	mock *MockS3Uploader
 }
 
-// NewMockUploader creates a new mock instance.
-func NewMockUploader(ctrl *gomock.Controller) *MockUploader {
-	mock := &MockUploader{ctrl: ctrl}
-	mock.recorder = &MockUploaderMockRecorder{mock}
+// NewMockS3Uploader creates a new mock instance.
+func NewMockS3Uploader(ctrl *gomock.Controller) *MockS3Uploader {
+	mock := &MockS3Uploader{ctrl: ctrl}
+	mock.recorder = &MockS3UploaderMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockUploader) EXPECT() *MockUploaderMockRecorder {
+func (m *MockS3Uploader) EXPECT() *MockS3UploaderMockRecorder {
 	return m.recorder
 }
 
 // UploadToS3 mocks base method.
-func (m *MockUploader) UploadToS3(originalURL string) (string, error) {
+func (m *MockS3Uploader) UploadToS3(originalURL string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UploadToS3", originalURL)
 	ret0, _ := ret[0].(string)
@@ -49,13 +49,37 @@ func (m *MockUploader) UploadToS3(originalURL string) (string, error) {
 }
 
 // UploadToS3 indicates an expected call of UploadToS3.
-func (mr *MockUploaderMockRecorder) UploadToS3(originalURL any) *gomock.Call {
+func (mr *MockS3UploaderMockRecorder) UploadToS3(originalURL any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadToS3", reflect.TypeOf((*MockUploader)(nil).UploadToS3), originalURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadToS3", reflect.TypeOf((*MockS3Uploader)(nil).UploadToS3), originalURL)
+}
+
+// MockSFTPUploader is a mock of SFTPUploader interface.
+type MockSFTPUploader struct {
+	ctrl     *gomock.Controller
+	recorder *MockSFTPUploaderMockRecorder
+	isgomock struct{}
+}
+
+// MockSFTPUploaderMockRecorder is the mock recorder for MockSFTPUploader.
+type MockSFTPUploaderMockRecorder struct {
+	mock *MockSFTPUploader
+}
+
+// NewMockSFTPUploader creates a new mock instance.
+func NewMockSFTPUploader(ctrl *gomock.Controller) *MockSFTPUploader {
+	mock := &MockSFTPUploader{ctrl: ctrl}
+	mock.recorder = &MockSFTPUploaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSFTPUploader) EXPECT() *MockSFTPUploaderMockRecorder {
+	return m.recorder
 }
 
 // UploadToSFTP mocks base method.
-func (m *MockUploader) UploadToSFTP(originalURL string) (string, error) {
+func (m *MockSFTPUploader) UploadToSFTP(originalURL string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UploadToSFTP", originalURL)
 	ret0, _ := ret[0].(string)
@@ -64,7 +88,7 @@ func (m *MockUploader) UploadToSFTP(originalURL string) (string, error) {
 }
 
 // UploadToSFTP indicates an expected call of UploadToSFTP.
-func (mr *MockUploaderMockRecorder) UploadToSFTP(originalURL any) *gomock.Call {
+func (mr *MockSFTPUploaderMockRecorder) UploadToSFTP(originalURL any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadToSFTP", reflect.TypeOf((*MockUploader)(nil).UploadToSFTP), originalURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadToSFTP", reflect.TypeOf((*MockSFTPUploader)(nil).UploadToSFTP), originalURL)
 }

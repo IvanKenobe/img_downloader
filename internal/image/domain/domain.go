@@ -1,4 +1,4 @@
-package imageDomain
+package domain
 
 type Image struct {
 	ID   string   `gorm:"primaryKey"`
